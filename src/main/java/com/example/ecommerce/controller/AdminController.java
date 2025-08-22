@@ -1,10 +1,12 @@
-import ch.qos.logback.core.model.Model;
+package com.example.ecommerce.controller;
+
 import com.example.ecommerce.entity.Product;
+import com.example.ecommerce.entity.Order;  // ✅ Correct entity import
 import com.example.ecommerce.repository.OrderRepository;
 import com.example.ecommerce.repository.ProductRepository;
-import jakarta.persistence.criteria.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,6 +26,9 @@ public class AdminController {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private OrderRepository orderRepository;
+
     @GetMapping("/dashboard")
     public String adminDashboard(Model model) {
         model.addAttribute("products", productRepository.findAll());
@@ -42,22 +47,21 @@ public class AdminController {
             @RequestParam("imageFile") MultipartFile imageFile
     ) {
         try {
-// File system path (outside classpath)
-            String uploadDir = "D:\\lnctu\\ecommerce\\src\\main\\resources\\static\\images";
+            // File system path (outside classpath)
+            String uploadDir = "//Users//dhyanvendrasingh//Downloads//ecommerce//src//main//resources//static//images";
             File uploadFolder = new File(uploadDir);
             if (!uploadFolder.exists()) {
                 uploadFolder.mkdirs(); // create folder if it doesn't exist
             }
 
-// Generate unique file name
+            // Generate unique file name
             String fileName = UUID.randomUUID().toString() + "_" + imageFile.getOriginalFilename();
 
-// Save file
+            // Save file
             Path filePath = Paths.get(uploadFolder.getAbsolutePath(), fileName);
-            System.out.println(filePath);
             Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-// Store only file name in DB
+            // Store only file name in DB
             product.setImageName(fileName);
             productRepository.save(product);
 
@@ -82,13 +86,9 @@ public class AdminController {
         return "redirect:/admin/dashboard";
     }
 
-
-    @Autowired
-    private OrderRepository orderRepository;
-
     @GetMapping("/orders")
     public String viewAllOrders(Model model) {
-        List<Order> orders = orderRepository.findAll();
+        List<Order> orders = orderRepository.findAll(); // ✅ Correct entity usage
         model.addAttribute("orders", orders);
         return "admin-orders";
     }

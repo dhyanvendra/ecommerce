@@ -1,3 +1,5 @@
+package com.example.ecommerce.service;
+
 import com.example.ecommerce.entity.User;
 import com.example.ecommerce.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;

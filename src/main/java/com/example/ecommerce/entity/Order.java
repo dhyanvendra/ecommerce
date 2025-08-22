@@ -1,14 +1,14 @@
 package com.example.ecommerce.entity;
 
-import com.example.ecommerce.entity.OrderItem;
+import com.example.ecommerce.entity.Order;
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.*;
 
 @Entity
-@Table(name = "orders")
+@Table(name = "orders") // "order" is a reserved keyword in SQL
 public class Order {
 
     @Id
@@ -21,10 +21,10 @@ public class Order {
 
     private double totalAmount;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
 
-    // Getters and Setters
+    // --- Getters and Setters ---
 
     public Long getId() {
         return id;
@@ -64,18 +64,5 @@ public class Order {
 
     public void setItems(List<OrderItem> items) {
         this.items = items;
-    }
-
-    // toString() Method
-
-    @Override
-    public String toString() {
-        return "Order{" +
-                "id=" + id +
-                ", userEmail='" + userEmail + '\'' +
-                ", orderDate=" + orderDate +
-                ", totalAmount=" + totalAmount +
-                ", items=" + items +
-                '}';
     }
 }

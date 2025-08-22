@@ -1,7 +1,10 @@
+package com.example.ecommerce.controller;
+
 import com.example.ecommerce.entity.User;
 import com.example.ecommerce.repository.UserRepository;
-import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
+import com.example.ecommerce.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;

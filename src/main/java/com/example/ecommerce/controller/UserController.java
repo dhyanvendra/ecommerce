@@ -1,12 +1,16 @@
-import ch.qos.logback.core.model.Model;
+package com.example.ecommerce.controller;
+
+import com.example.ecommerce.entity.Order;
+import com.example.ecommerce.entity.OrderItem;
 import com.example.ecommerce.entity.Product;
 import com.example.ecommerce.repository.OrderRepository;
 import com.example.ecommerce.repository.ProductRepository;
-import jakarta.persistence.criteria.Order;
+import com.example.ecommerce.service.EmailService;
 import jakarta.servlet.http.HttpSession;
-import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -44,13 +48,14 @@ public class UserController {
     }
 
     @GetMapping("/add-to-cart/{id}")
-    public String addToCart(@PathVariable Long id, @ModelAttribute("cart") List<Product> cart,
+    public String addToCart(@PathVariable Long id,
+                            @ModelAttribute("cart") List<Product> cart,
                             HttpSession session,
                             RedirectAttributes redirectAttributes) {
         Product product = productRepository.findById(id).orElse(null);
 
         if (product != null) {
-// Get or initialize a temporary stock map in session
+            // Get or initialize a temporary stock map in session
             Map<Long, Integer> reservedStock = (Map<Long, Integer>) session.getAttribute("reservedStock");
             if (reservedStock == null) {
                 reservedStock = new HashMap<>();
@@ -58,11 +63,11 @@ public class UserController {
 
             int alreadyReserved = reservedStock.getOrDefault(product.getId(), 0);
 
-// Check against real stock in DB
+            // Check against real stock in DB
             if (alreadyReserved < product.getStock()) {
                 cart.add(product); // Add to cart visually
 
-// Reserve 1 quantity (not save in DB)
+                // Reserve 1 quantity (not saved in DB yet)
                 reservedStock.put(product.getId(), alreadyReserved + 1);
                 session.setAttribute("reservedStock", reservedStock);
 
@@ -75,7 +80,6 @@ public class UserController {
         return "redirect:/user/dashboard";
     }
 
-
     @GetMapping("/cart")
     public String viewCart(@ModelAttribute("cart") List<Product> cart, Model model) {
         double total = cart.stream().mapToDouble(Product::getPrice).sum();
@@ -85,12 +89,13 @@ public class UserController {
     }
 
     @GetMapping("/cart/remove/{index}")
-    public String removeItem(@PathVariable int index, @ModelAttribute("cart") List<Product> cart,
+    public String removeItem(@PathVariable int index,
+                             @ModelAttribute("cart") List<Product> cart,
                              HttpSession session) {
         if (index >= 0 && index < cart.size()) {
             Product removedProduct = cart.remove(index);
 
-// Restore reserved stock in session
+            // Restore reserved stock in session
             Map<Long, Integer> reservedStock = (Map<Long, Integer>) session.getAttribute("reservedStock");
             if (reservedStock == null) {
                 reservedStock = new HashMap<>();
@@ -103,7 +108,7 @@ public class UserController {
                 reservedStock.put(productId, reservedQty - 1);
             }
 
-// Update session
+            // Update session
             session.setAttribute("reservedStock", reservedStock);
         }
 
@@ -126,18 +131,18 @@ public class UserController {
         double total = 0;
 
         for (Product p : cart) {
-// Fetch latest product from DB (for correct stock update)
+            // Fetch latest product from DB (for correct stock update)
             Product dbProduct = productRepository.findById(p.getId()).orElse(null);
             if (dbProduct == null || dbProduct.getStock() < 1) {
                 model.addAttribute("message", "Insufficient stock for: " + p.getName());
                 return "redirect:/user/cart";
             }
 
-// Decrement actual stock
+            // Decrement actual stock
             dbProduct.setStock(dbProduct.getStock() - 1);
             productRepository.save(dbProduct);
 
-// Create order item
+            // Create order item
             OrderItem item = new OrderItem();
             item.setProduct(dbProduct);
             item.setPrice(dbProduct.getPrice());
@@ -150,10 +155,10 @@ public class UserController {
         order.setTotalAmount(total);
         orderRepository.save(order);
 
-// Clear cart
+        // Clear cart
         sessionStatus.setComplete();
 
-// Send email
+        // Send email
         emailService.sendOrderEmail(
                 authentication.getName(),
                 "Order Confirmation - E-commerce",
@@ -165,6 +170,7 @@ public class UserController {
 
     @GetMapping("/orders")
     public String userOrders(Model model, Authentication authentication) {
+        // ✅ FIX: use your entity Order, not jakarta.persistence.criteria.Order
         List<Order> orders = orderRepository.findByUserEmail(authentication.getName());
         model.addAttribute("orders", orders);
         return "order-history";
